@@ -12,6 +12,14 @@ def url(subdomain: str) -> str:
     return f"https://{subdomain}.example.com/api/v4/projects/1/packages/pypi/simple/keyring-gitlab-pypi"
 
 
+def purl(subdomain: str) -> str:
+    return (
+        f"https://{subdomain}.example.com/api/v4/projects/1/packages/pypi/files/"
+        f"fb87de1c45c34ab4557e88dd5fd0d4e12154b84f7427722d3349a6fda7954ec1/"
+        f"keyring-gitlab-pypi-1.0.0-py3-none-any.whl"
+    )
+
+
 @pytest.mark.parametrize(
     ("subdomain", "token"),
     [
@@ -25,6 +33,8 @@ def test_get_password(config_file: Path, subdomain: str, token: str) -> None:
     backend = GitlabPypi()
     assert backend.get_password(url(subdomain), "__token__") == token
     assert backend.get_password(url(subdomain), "alice") is None
+    assert backend.get_password(purl(subdomain), "__token__") == token
+    assert backend.get_password(purl(subdomain), "bob") is None
 
 
 @pytest.mark.parametrize(
@@ -42,6 +52,10 @@ def test_get_credential(
 ) -> None:
     backend = GitlabPypi()
     credential = backend.get_credential(url(subdomain), None)
+    assert isinstance(credential, SimpleCredential)
+    assert credential.username == "__token__"
+    assert credential.password == token
+    credential = backend.get_credential(purl(subdomain), None)
     assert isinstance(credential, SimpleCredential)
     assert credential.username == "__token__"
     assert credential.password == token

@@ -32,7 +32,7 @@ def _load_personal_access_token(service: str) -> str | None:
     except ValueError:
         return None
 
-    if not re.match(r"^/api/v4/projects/[^/]+/packages/pypi/simple", url.path):
+    if not re.match(r"^/api/v4/projects/[^/]+/packages/pypi", url.path):
         return None
 
     try:
