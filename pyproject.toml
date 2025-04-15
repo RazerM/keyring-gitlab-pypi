@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "keyring-gitlab-pypi"
+version = "0.1"
+description = "keyring backend for GitLab package indexes"
+readme = "README.md"
+license = "MIT"
+authors = [
+    { name = "Frazer McLean", email = "frazer@frazermclean.co.uk" }
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "keyring>=25.6.0",
+    "platformdirs>=4.3.7",
+    "tomli>=2.2.1; python_full_version<'3.11'",
+    "yarl>=1.19.0",
+]
+
+[project.entry-points."keyring.backends"]
+"GitLab PyPI" = "keyrings.gitlab_pypi"
+
+[project.urls]
+Repository = "https://github.com/RazerM/keyring-gitlab-pypi"
+
+[dependency-groups]
+dev = [
+    { include-group = "coverage" },
+    { include-group = "nox" },
+    "pytest>=8.3.5",
+    "ruff==0.11.5",
+]
+coverage = [
+    "coverage[toml]>=7.8.0",
+]
+nox = [
+    "nox>=2025.2.9",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff.lint]
+select = [
+    "E4", "E7", "E9", "F", # ruff defaults
+    "I", # isort
+    "UP", # pyupgrade
+]
+
+[tool.coverage.run]
+branch = true
+relative_files = true
+source = ["keyrings.gitlab_pypi", "tests/"]
+parallel = true
+
+[tool.coverage.paths]
+source = ["src/keyrings", ".nox/**/site-packages/keyrings"]
