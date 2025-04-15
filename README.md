@@ -48,13 +48,14 @@ It is designed for use with [uv].
     authenticate = "always"
     ```
 
-    > [!NOTE]
-    > You need `authenticate = "always"` for uv to invoke [keyring] when no
-    > username is specified. This option is a good idea anyway!
-    >
-    > Alternatively, add the username `__token__` to the URL, but this is not
-    > recommended for `pyproject.toml` as you likely want to use a different
-    > username in CI, for example.
+    **Note**
+
+    You need `authenticate = "always"` for uv to invoke [keyring] when no
+    username is specified. This option is a good idea anyway!
+
+    Alternatively, add the username `__token__` to the URL, but this is not
+    recommended for `pyproject.toml` as you likely want to use a different
+    username in CI, for example.
 
 5.  Done! `keyring-gitlab-pypi` will return your token for URLs that look like package installs.
 
