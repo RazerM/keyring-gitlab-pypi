@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 import sys
 from pathlib import Path
@@ -26,13 +27,22 @@ def user_config_path() -> Path:
 CONFIG_FILENAME = "gitlab-pypi.toml"
 
 
-def _load_personal_access_token(service: str) -> str | None:
+def _gitlab_url_from_service(service: str) -> URL | None:
     try:
         url = URL(service)
     except ValueError:
         return None
 
     if not re.match(r"^/api/v4/projects/[^/]+/packages/pypi", url.path):
+        return None
+
+    return url
+
+
+def _load_personal_access_token(service: str) -> str | None:
+    url = _gitlab_url_from_service(service)
+
+    if url is None:
         return None
 
     try:
@@ -76,12 +86,43 @@ def _load_personal_access_token(service: str) -> str | None:
     return None
 
 
+def _load_ci_job_token(service: str) -> str | None:
+    url = _gitlab_url_from_service(service)
+
+    if url is None:
+        return None
+
+    if not os.getenv("GITLAB_CI"):
+        return None
+
+    try:
+        ci_api_url = URL(os.environ["CI_API_V4_URL"])
+    except (KeyError, ValueError):
+        return None
+
+    if (
+        url.scheme != ci_api_url.scheme
+        or url.host != ci_api_url.host
+        or url.port != ci_api_url.port
+    ):
+        return None
+
+    token = os.getenv("CI_JOB_TOKEN")
+
+    if not token:
+        return None
+
+    return token
+
+
 class GitlabPypi(KeyringBackend):
     priority = 9  # type: ignore[assignment]
 
     def get_password(self, service: str, username: str) -> str | None:
         if username == "__token__":
             return _load_personal_access_token(service)
+        elif username == "gitlab-ci-token":
+            return _load_ci_job_token(service)
 
         return None
 
@@ -98,5 +139,7 @@ class GitlabPypi(KeyringBackend):
     ) -> SimpleCredential | None:
         if token := _load_personal_access_token(service):
             return SimpleCredential("__token__", token)
+        elif token := _load_ci_job_token(service):
+            return SimpleCredential("gitlab-ci-token", token)
 
         return None

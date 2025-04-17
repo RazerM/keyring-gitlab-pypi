@@ -1,8 +1,20 @@
+<p>
+    <a href="https://pypi.org/project/keyring-gitlab-pypi/">
+        <img src="https://img.shields.io/pypi/v/keyring-gitlab-pypi.svg" alt="PyPI" />
+    </a>
+    <a href="https://github.com/RazerM/keyring-gitlab-pypi/actions?workflow=CI">
+        <img src="https://github.com/RazerM/keyring-gitlab-pypi/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI Status" />
+    </a>
+    <a href="https://raw.githubusercontent.com/RazerM/keyring-gitlab-pypi/main/LICENSE">
+        <img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License" />
+    </a>
+</p>
+
 `keyring-gitlab-pypi` is a backend for [keyring] which recognises [GitLab package registry] URLs.
 
 It is designed for use with [uv].
 
-## How to use
+## Using it locally
 
 1.  Install keyring with this backend
 
@@ -50,14 +62,48 @@ It is designed for use with [uv].
 
     **Note**
 
-    You need `authenticate = "always"` for uv to invoke [keyring] when no
-    username is specified. This option is a good idea anyway!
+    You need `authenticate = "always"` for uv to invoke [keyring] when no username is specified. This option is a good idea anyway!
 
-    Alternatively, add the username `__token__` to the URL, but this is not
-    recommended for `pyproject.toml` as you likely want to use a different
-    username in CI, for example.
+    Alternatively, add the username `__token__` to the URL, but this is not recommended for `pyproject.toml` as you likely want to use a different username in CI, for example.
 
 5.  Done! `keyring-gitlab-pypi` will return your token for URLs that look like package installs.
+
+## Using it in GitLab CI
+
+`$CI_JOB_TOKEN` will be used automatically as long as the index URL matches the running GitLab instance.
+
+In principle this is all you need:
+
+```yaml
+variables:
+  UV_KEYRING_PROVIDER: subprocess
+
+test:
+  image: ghcr.io/astral-sh/uv:python3.13-bookworm
+  before_script:
+    - uv tool install keyring --with keyring-gitlab-pypi
+    - uv sync
+```
+
+This assumes that you haven't set `UV_INDEX`. (`uv tool` ignores `pyproject.toml` so you don't need to worry about indexes configured there).
+
+It's recommended to constrain the versions:
+
+```bash
+printf '%s\n' keyring keyring-gitlab-pypi > keyring-constraints.in
+uv pip compile --universal keyring-constraints.in -o keyring-constraints.txt
+```
+
+```yaml
+variables:
+  UV_KEYRING_PROVIDER: subprocess
+
+test:
+  image: ghcr.io/astral-sh/uv:python3.13-bookworm
+  before_script:
+    - uv tool install keyring --with keyring-gitlab-pypi -c keyring-constraints.txt
+    - uv sync
+```
 
 ## Motivation
 
