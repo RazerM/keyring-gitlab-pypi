@@ -1,6 +1,7 @@
 <p>
   <a href="https://pypi.org/project/keyring-gitlab-pypi/"><img src="https://img.shields.io/pypi/v/keyring-gitlab-pypi.svg" alt="PyPI" /></a>
   <a href="https://github.com/RazerM/keyring-gitlab-pypi/actions?workflow=CI"><img src="https://github.com/RazerM/keyring-gitlab-pypi/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI Status" /></a>
+  <a href="https://codecov.io/github/RazerM/keyring-gitlab-pypi"><img src="https://codecov.io/github/RazerM/keyring-gitlab-pypi/graph/badge.svg?token=YFLPZEO0NB"/></a>
   <a href="https://raw.githubusercontent.com/RazerM/keyring-gitlab-pypi/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License" /></a>
 </p>
 
