@@ -41,6 +41,9 @@ dev = [
     "pytest>=8.3.5",
     "ruff==0.11.5",
     "pyfakefs>=5.8.0",
+    "tomli-w>=1.2.0",
+    "pytest-xdist>=3.6.1",
+    "pytest-cov>=6.1.1",
 ]
 coverage = [
     "coverage[toml]>=7.8.0",
@@ -67,3 +70,15 @@ parallel = true
 
 [tool.coverage.paths]
 source = ["src/keyrings", ".nox/**/site-packages/keyrings"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    '^\s*pass$',
+    '^\s*raise NotImplementedError\b',
+    '^\s*return NotImplemented\b',
+    '^\s*raise$',
+    '^\s*\.\.\.$',
+    '^\s*if (typing\.)?TYPE_CHECKING:',
+    '^\s*(typing\.)?assert_never\('
+]

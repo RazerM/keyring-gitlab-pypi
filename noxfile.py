@@ -22,9 +22,14 @@ def tests(session: nox.Session) -> None:
         tests = ["tests/"]
 
     session.run(
-        "coverage",
-        "run",
-        "-m",
         "pytest",
+        "--numprocesses=auto",
+        # --cov has an optional value. I don't want to override the source
+        # defined in the config file. Take care that the argument after it
+        # cannot be interpreted as the option's value.
+        "--cov",
+        "--cov-report=",
+        "--cov-context=test",
+        "--cov-append",
         *tests,
     )

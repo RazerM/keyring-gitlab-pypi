@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import re
 import sys
+from itertools import product
 from pathlib import Path
 
 import platformdirs
@@ -45,6 +46,9 @@ def _gitlab_url_from_service(service: str) -> URL | None:
     if not re.match(r"^/api/v4/projects/[^/]+/packages/pypi", url.path):
         return None
 
+    if url.scheme not in ("http", "https"):
+        return None
+
     return url
 
 
@@ -63,14 +67,24 @@ def _load_personal_access_token(service: str) -> str | None:
     # Transform a URL like https://gitlab.com/api/v4/projects/0/packages/pypi/simple
     # into some keys that can be used:
     # - https://gitlab.com
-    # - https://gitlab.com/
+    # - https://gitlab.com:443
     # - gitlab.com
     # - gitlab.com/
-    url = url.with_path("").with_password(None)
-    keys = [str(url), str(url.with_path("/"))]
+
+    prefixes = [f"{url.scheme}://"]
     if url.scheme == "https":
-        keys.append(str(url).removeprefix("https://"))
-        keys.append(str(url.with_path("/")).removeprefix("https://"))
+        prefixes.append("")
+
+    assert url.port is not None
+    portstrs = [f":{url.port}"]
+    if url.is_default_port():
+        portstrs.insert(0, "")
+
+    suffixes = ["", "/"]
+
+    keys = []
+    for prefix, portstr, suffix in product(prefixes, portstrs, suffixes):
+        keys.append(f"{prefix}{url.host}{portstr}{suffix}")
 
     for key in keys:
         try:
