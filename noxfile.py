@@ -9,9 +9,6 @@ def tests(session: nox.Session) -> None:
     session.run_install(
         "uv",
         "sync",
-        "--no-config",
-        # "--no-editable",
-        # "--reinstall-package=keyring-gitlab-pypi",
         f"--python={session.virtualenv.location}",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
