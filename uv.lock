@@ -362,6 +362,7 @@ coverage = [
 dev = [
     { name = "coverage", extra = ["toml"] },
     { name = "nox" },
+    { name = "pyfakefs" },
     { name = "pytest" },
     { name = "ruff" },
 ]
@@ -382,6 +383,7 @@ coverage = [{ name = "coverage", extras = ["toml"], specifier = ">=7.8.0" }]
 dev = [
     { name = "coverage", extras = ["toml"], specifier = ">=7.8.0" },
     { name = "nox", specifier = ">=2025.2.9" },
+    { name = "pyfakefs", specifier = ">=5.8.0" },
     { name = "pytest", specifier = ">=8.3.5" },
     { name = "ruff", specifier = "==0.11.5" },
 ]
@@ -667,6 +669,15 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/1d/b2/31537cf4b1ca988837256c910a668b553fceb8f069bedc4b1c826024b52c/pycparser-2.22.tar.gz", hash = "sha256:491c8be9c040f5390f5bf44a5b07752bd07f56edf992381b05c701439eec10f6", size = 172736 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/13/a3/a812df4e2dd5696d1f351d58b8fe16a405b234ad2886a0dab9183fb78109/pycparser-2.22-py3-none-any.whl", hash = "sha256:c3702b6d3dd8c7abc1afa565d7e63d53a1d0bd86cdc24edd75470f4de499cfcc", size = 117552 },
+]
+
+[[package]]
+name = "pyfakefs"
+version = "5.8.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/a8/50/a839c8812899e8955223d95b27767480856f9723b3230ddee0472cf1dbe2/pyfakefs-5.8.0.tar.gz", hash = "sha256:7e5457ee3cc67069d3cef6e278227ecfc80bfb61e925bc0a4d3b0af32d1c99ce", size = 215072 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/14/ac/ae2cf01b18b7ac04d22e5faf7d5eafcc000269c4f4a9036e40da6c37aed9/pyfakefs-5.8.0-py3-none-any.whl", hash = "sha256:4bd0fc8def7d0582139922447758632ff34a327b460a7e83feb6edbd841061dd", size = 230606 },
 ]
 
 [[package]]

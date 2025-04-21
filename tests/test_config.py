@@ -1,11 +1,14 @@
 from __future__ import annotations
 
+import os
+import sys
 from pathlib import Path
 
 import pytest
 from keyring.credentials import SimpleCredential
+from pyfakefs.fake_filesystem import FakeFilesystem
 
-from keyrings.gitlab_pypi import GitlabPypi
+from keyrings.gitlab_pypi import GitlabPypi, user_config_path
 
 
 def url(subdomain: str) -> str:
@@ -69,11 +72,11 @@ def test_get_password_unknown_url(backend: GitlabPypi, config_file: Path) -> Non
     assert backend.get_password(url("gitlab-e"), "__token__") is None
 
 
-def test_get_password_no_config(backend: GitlabPypi) -> None:
+def test_get_password_no_config(backend: GitlabPypi, fs: FakeFilesystem) -> None:
     assert backend.get_password(url("gitlab-a"), "__token__") is None
 
 
-def test_get_password_wrong_url(backend: GitlabPypi) -> None:
+def test_get_password_wrong_url(backend: GitlabPypi, config_file: Path) -> None:
     assert backend.get_password("https://gitlab-a.example.com/foo", "__token__") is None
 
 
@@ -81,9 +84,31 @@ def test_get_credential_unknown_url(backend: GitlabPypi, config_file: Path) -> N
     assert backend.get_credential(url("gitlab-e"), None) is None
 
 
-def test_get_credential_no_config(backend: GitlabPypi) -> None:
+def test_get_credential_no_config(backend: GitlabPypi, fs: FakeFilesystem) -> None:
     assert backend.get_credential(url("gitlab-a"), None) is None
 
 
-def test_get_credential_wrong_url(backend: GitlabPypi) -> None:
+def test_get_credential_wrong_url(backend: GitlabPypi, config_file: Path) -> None:
     assert backend.get_credential("https://gitlab-a.example.com/foo", None) is None
+
+
+@pytest.mark.skipif(sys.platform != "linux", reason="requires Linux")
+def test_linux_config_dir() -> None:
+    assert user_config_path() == Path("~/.config").expanduser()
+
+
+@pytest.mark.skipif(sys.platform != "darwin", reason="requires macOS")
+def test_macos_config_dir(fs: FakeFilesystem) -> None:
+    # Default is Linux-like ~/.config
+    assert user_config_path() == Path("~/.config").expanduser()
+
+    # macOS convention will be used if it exists
+    path = Path("~/Library/Application Support/gitlab-pypi").expanduser()
+    fs.create_dir(path)
+    assert user_config_path() == path
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="requires Windows")
+def test_windows_config_dir() -> None:
+    localappdata = os.environ["LOCALAPPDATA"]
+    assert user_config_path() == Path(localappdata, "gitlab-pypi")

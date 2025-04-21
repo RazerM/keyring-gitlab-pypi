@@ -29,9 +29,7 @@ jobs:
           python-version: "${{ matrix.python-version }}"
       - name: "Install dependencies"
         run: |
-          set -xe
           python -VV
-          rustc --version
           python -m site
           uv --version
           uv sync --no-install-project --no-dev --group nox --group coverage

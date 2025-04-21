@@ -17,14 +17,27 @@ It is designed for use with [uv].
     uv tool install keyring --with keyring-gitlab-pypi
     ```
 
-2.  Create a personal access token with `read_api` scope and add it to `~/.config/gitlab-pypi.toml`:
+2.  Open the config file for editing:
+
+    <dl>
+      <dt>macOS</dt>
+      <dd><code>$HOME/Library/Application Support/gitlab-pypi/gitlab-pypi.toml</code> if directory <code>$HOME/Library/Application Support/gitlab-pypi</code> exists, or <code>$HOME/.config/gitlab-pypi.toml</code> otherwise.</dd>
+
+      <dt>Linux</dt>
+      <dd><code>$XDG_CONFIG_HOME/gitlab-pypi.toml</code> if <code>XDG_CONFIG_HOME</code> is set, or <code>$HOME/.config/gitlab-pypi.toml</code> otherwise.</dd>
+
+      <dt>Windows</dt>
+      <dd><code>%LOCALAPPDATA%\gitlab-pypi\gitlab-pypi.toml</code></dd>
+    </dl>
+
+3.  Create a personal access token with `read_api` scope and add it to the config file:
 
     ```toml
     ["https://gitlab.com"]
     token = "<token>"
     ```
 
-3.  Configure [`keyring-provider`] in uv:
+4.  Configure [`keyring-provider`] in uv:
 
     - using an environment variable:
 
@@ -44,7 +57,7 @@ It is designed for use with [uv].
       uv sync --keyring-provider=subprocess
       ```
 
-4.  Configure one or more GitLab package indexes
+5.  Configure one or more GitLab package indexes
 
     For example, in `pyproject.toml`:
 
@@ -61,7 +74,7 @@ It is designed for use with [uv].
 
     Alternatively, add the username `__token__` to the URL, but this is not recommended for `pyproject.toml` as you likely want to use a different username in CI, for example.
 
-5.  Done! `keyring-gitlab-pypi` will return your token for URLs that look like package installs.
+6.  Done! `keyring-gitlab-pypi` will return your token for URLs that look like package installs.
 
 ## Using it in GitLab CI
 

@@ -5,14 +5,10 @@ import re
 import sys
 from pathlib import Path
 
+import platformdirs
 from keyring.backend import KeyringBackend
 from keyring.credentials import SimpleCredential
 from yarl import URL
-
-if sys.platform == "darwin":
-    from platformdirs.unix import Unix as PlatformDirs
-else:
-    from platformdirs import PlatformDirs
 
 if sys.version_info < (3, 11):
     import tomli as tomllib
@@ -21,7 +17,20 @@ else:
 
 
 def user_config_path() -> Path:
-    return PlatformDirs().user_config_path
+    appname = "gitlab-pypi"
+    if sys.platform == "darwin":
+        # Use ~/Library/Application Support/gitlab-pypi if it exists
+        path = platformdirs.user_config_path(appname)
+        if path.is_dir():
+            return path
+
+        # Default to Linux-like ~/.config
+        return Path("~/.config").expanduser()
+
+    if sys.platform == "linux":
+        return platformdirs.user_config_path()
+
+    return platformdirs.user_config_path(appname, appauthor=False)
 
 
 CONFIG_FILENAME = "gitlab-pypi.toml"
