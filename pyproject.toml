@@ -40,12 +40,19 @@ dev = [
     { include-group = "nox" },
     "pytest>=8.3.5",
     "ruff==0.11.5",
+    "pyfakefs>=5.8.0",
+    "tomli-w>=1.2.0",
+    "pytest-xdist>=3.6.1",
+    "pytest-cov>=6.1.1",
 ]
 coverage = [
     "coverage[toml]>=7.8.0",
 ]
 nox = [
     "nox>=2025.2.9",
+]
+typing = [
+    "mypy>=1.15.0",
 ]
 
 [tool.setuptools.packages.find]
@@ -66,3 +73,33 @@ parallel = true
 
 [tool.coverage.paths]
 source = ["src/keyrings", ".nox/**/site-packages/keyrings"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    '^\s*pass$',
+    '^\s*raise NotImplementedError\b',
+    '^\s*return NotImplemented\b',
+    '^\s*raise$',
+    '^\s*\.\.\.$',
+    '^\s*if (typing\.)?TYPE_CHECKING:',
+    '^\s*(typing\.)?assert_never\('
+]
+
+[tool.mypy]
+check_untyped_defs = true
+disallow_any_decorated = true
+disallow_any_generics = true
+disallow_any_unimported = true
+disallow_incomplete_defs = true
+disallow_subclassing_any = true
+disallow_untyped_calls = true
+disallow_untyped_decorators = true
+disallow_untyped_defs = true
+no_implicit_reexport = true
+strict_equality = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = true
+explicit_package_bases = true

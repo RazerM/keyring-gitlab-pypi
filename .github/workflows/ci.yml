@@ -10,13 +10,14 @@ on:
 
 jobs:
   tests:
-    name: "Python ${{ matrix.python-version }}"
-    runs-on: "ubuntu-latest"
+    name: "Python ${{ matrix.python-version }} on ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
+        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
       - uses: "actions/checkout@v4"
@@ -28,18 +29,14 @@ jobs:
           python-version: "${{ matrix.python-version }}"
       - name: "Install dependencies"
         run: |
-          set -xe
           python -VV
-          rustc --version
           python -m site
           uv --version
           uv sync --no-install-project --no-dev --group nox --group coverage
       - name: "Run nox targets for ${{ matrix.python-version }}"
         run: "uv run nox --python ${{ matrix.python-version }}"
       - name: "Convert coverage"
-        run: |
-          uv run coverage combine
-          uv run coverage xml
+        run: uv run coverage xml
       - name: "Upload coverage to Codecov"
         uses: codecov/codecov-action@v5
         with:
