@@ -35,6 +35,11 @@ def _convert_mapping_proxy(d: Mapping[str, str]) -> MappingProxyType[str, str]:
 
 @define(frozen=True)
 class ConfigDirEnv:
+    # Prior to Python 3.11, we can't use Path objects created by
+    # pytest_generate_tests because pyfakefs is not yet active. Instead, we
+    # hold onto a str and lazily create a path when the property is accessed
+    # in a test fixture.
+    # https://pytest-pyfakefs.readthedocs.io/en/latest/troubleshooting.html#pathlib-path-objects-created-outside-of-tests
     _path: str = field(converter=_convert_path_to_str)
     env: Mapping[str, str] = field(factory=dict, converter=_convert_mapping_proxy)
 
