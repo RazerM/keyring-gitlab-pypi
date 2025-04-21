@@ -33,3 +33,22 @@ def tests(session: nox.Session) -> None:
         "--cov-append",
         *tests,
     )
+
+
+@nox.session(python="3.13")
+def typing(session: nox.Session) -> None:
+    session.run_install(
+        "uv",
+        "sync",
+        "--group=typing",
+        f"--python={session.virtualenv.location}",
+        env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
+    )
+    session.run(
+        "mypy",
+        "src/keyrings",
+        "tests",
+        # This environment variable is required in combination with
+        # explicit_package_bases in pyproject.toml so that namespace packages work.
+        env={"MYPYPATH": "src"},
+    )

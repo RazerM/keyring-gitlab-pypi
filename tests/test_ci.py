@@ -39,6 +39,7 @@ def test_get_credential(backend: GitlabPypi, mock_ci: None) -> None:
     assert credential.username == "gitlab-ci-token"
     assert credential.password == os.environ["CI_JOB_TOKEN"]
     credential = backend.get_credential(purl(), None)
+    assert credential is not None
     assert credential.username == "gitlab-ci-token"
     assert credential.password == os.environ["CI_JOB_TOKEN"]
 

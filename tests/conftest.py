@@ -24,16 +24,22 @@ from keyrings.gitlab_pypi import GitlabPypi
 
 
 def _convert_path_to_str(path: str | os.PathLike[str]) -> str:
+    """Fix mypy for attrs converter arg."""
     return os.fspath(path)
+
+
+def _convert_mapping_proxy(d: Mapping[str, str]) -> MappingProxyType[str, str]:
+    """Fix mypy for attrs converter arg."""
+    return MappingProxyType(d)
 
 
 @define(frozen=True)
 class ConfigDirEnv:
     _path: str = field(converter=_convert_path_to_str)
-    env: Mapping[str, str] = field(factory=dict, converter=MappingProxyType)
+    env: Mapping[str, str] = field(factory=dict, converter=_convert_mapping_proxy)
 
     @cached_property
-    def path(self):
+    def path(self) -> Path:
         return Path(self._path)
 
 

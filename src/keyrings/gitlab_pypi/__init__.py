@@ -5,6 +5,7 @@ import re
 import sys
 from itertools import product
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import platformdirs
 from keyring.backend import KeyringBackend
@@ -140,6 +141,10 @@ def _load_ci_job_token(service: str) -> str | None:
 
 class GitlabPypi(KeyringBackend):
     priority = 9  # type: ignore[assignment]
+
+    if TYPE_CHECKING:
+
+        def __init__(self) -> None: ...
 
     def get_password(self, service: str, username: str) -> str | None:
         if username == "__token__":
