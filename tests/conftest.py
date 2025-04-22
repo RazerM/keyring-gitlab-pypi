@@ -214,9 +214,10 @@ def isolate_env(monkeypatch: MonkeyPatch) -> None:
 
 
 @pytest.fixture
-def mock_ci(monkeypatch: MonkeyPatch) -> None:
+def mock_ci(monkeypatch: MonkeyPatch, gitlab_base_url: URL) -> None:
+    api_v4_url = gitlab_base_url.joinpath("api/v4")
     monkeypatch.setenv("GITLAB_CI", "true")
-    monkeypatch.setenv("CI_API_V4_URL", "https://gitlab.example.com/api/v4")
+    monkeypatch.setenv("CI_API_V4_URL", str(api_v4_url))
     monkeypatch.setenv("CI_JOB_TOKEN", "some-ci-job-token")
 
 
