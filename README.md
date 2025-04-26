@@ -85,6 +85,7 @@ In principle this is all you need:
 ```yaml
 variables:
   UV_KEYRING_PROVIDER: subprocess
+  UV_TOOL_BIN_DIR: /usr/local/bin
 
 test:
   image: ghcr.io/astral-sh/uv:python3.13-bookworm
@@ -105,6 +106,7 @@ uv pip compile --universal keyring-constraints.in -o keyring-constraints.txt
 ```yaml
 variables:
   UV_KEYRING_PROVIDER: subprocess
+  UV_TOOL_BIN_DIR: /usr/local/bin
 
 test:
   image: ghcr.io/astral-sh/uv:python3.13-bookworm
