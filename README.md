@@ -19,6 +19,8 @@ It is designed for use with [uv].
 
 2.  Open the config file for editing:
 
+    ### User
+
     <dl>
       <dt>macOS</dt>
       <dd><code>$HOME/Library/Application Support/gitlab-pypi/gitlab-pypi.toml</code> if directory <code>$HOME/Library/Application Support/gitlab-pypi</code> exists, or <code>$HOME/.config/gitlab-pypi.toml</code> otherwise.</dd>
@@ -28,6 +30,26 @@ It is designed for use with [uv].
 
       <dt>Windows</dt>
       <dd><code>%LOCALAPPDATA%\gitlab-pypi\gitlab-pypi.toml</code></dd>
+    </dl>
+
+    ### System
+
+    <dl>
+      <dt>macOS</dt>
+      <dd><code>/Library/Application Support/gitlab-pypi/gitlab-pypi.toml</code></dd>
+
+      <dt>Linux</dt>
+      <dd>
+        <p>
+          <code>&lt;config_dir&gt;/gitlab-pypi/gitlab-pypi.toml</code> where <code>&lt;config_dir&gt;</code> is any of the paths set in <code>$XDG_CONFIG_DIRS</code> paths, defaulting to <code>/etc/xdg</code>
+        </p>
+        <p>
+          <code>/etc/gitlab-pypi.toml</code> is higher priority than the above.
+        </p>
+      </dd>
+
+      <dt>Windows</dt>
+      <dd><code>C:\ProgramData\gitlab-pypi\gitlab-pypi.toml</code></dd>
     </dl>
 
 3.  Create a personal access token with `read_api` scope and add it to the config file:
