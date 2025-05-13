@@ -39,7 +39,7 @@ dev = [
     { include-group = "coverage" },
     { include-group = "nox" },
     "pytest>=8.3.5",
-    "ruff==0.11.5",
+    "ruff==0.11.9",
     "pyfakefs>=5.8.0",
     "tomli-w>=1.2.0",
     "pytest-xdist>=3.6.1",
