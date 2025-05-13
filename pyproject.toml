@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "keyring-gitlab-pypi"
-version = "1.0"
+version = "1.1"
 description = "keyring backend for GitLab package indexes"
 readme = "README.md"
 license = "MIT"
