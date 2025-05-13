@@ -7,7 +7,9 @@
 
 `keyring-gitlab-pypi` is a backend for [keyring] which recognises [GitLab package registry] URLs.
 
-It is designed for use with [uv].
+- ⚡️ Works seamlessly with [uv]
+- 🚀 Zero config needed on GitLab CI
+- 🗝️ No more per-index credentials on your machine
 
 ## Using it locally
 
