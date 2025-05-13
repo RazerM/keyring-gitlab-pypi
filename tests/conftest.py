@@ -20,7 +20,7 @@ from pyfakefs.fake_filesystem import FakeFilesystem
 from pytest import FixtureRequest, Metafunc, MonkeyPatch
 from yarl import URL
 
-from keyrings.gitlab_pypi import GitlabPypi
+from keyrings.gitlab_pypi import GitlabPypi, iter_config_paths
 
 
 def _convert_path_to_str(path: str | os.PathLike[str]) -> str:
@@ -55,18 +55,37 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
             dirs = [
                 ConfigDirEnv(home / "Library/Application Support/gitlab-pypi"),
                 ConfigDirEnv(home / ".config"),
+                ConfigDirEnv("/Library/Application Support/gitlab-pypi"),
             ]
-            ids = ["macos", "macos-linux-like"]
+            ids = ["macos-user", "macos-user-linux-like", "macos-system"]
         elif sys.platform == "linux":
             config_home = home / ".customconfig"
             dirs = [
                 ConfigDirEnv(home / ".config"),
                 ConfigDirEnv(config_home, {"XDG_CONFIG_HOME": str(config_home)}),
+                ConfigDirEnv("/etc/xdg/gitlab-pypi"),
+                ConfigDirEnv("/etc"),
+                ConfigDirEnv("/etc/foo/gitlab-pypi", {"XDG_CONFIG_DIRS": "/etc/foo"}),
             ]
-            ids = ["linux", "linux-xdg-config-home"]
-        else:
+            ids = [
+                "linux-user",
+                "linux-user-xdg-config-home",
+                "linux-system-xdg",
+                "linux-system-etc",
+                "linux-system-xdg-config-dirs",
+            ]
+        elif sys.platform == "win32":
+            dirs = [
+                ConfigDirEnv(home / "AppData/Local/gitlab-pypi"),
+                ConfigDirEnv(r"C:\ProgramData\gitlab-pypi"),
+            ]
+            ids = [
+                "windows-user",
+                "windows-system",
+            ]
+        else:  # pragma: no cover
             dirs = [ConfigDirEnv(user_config_path("gitlab-pypi", appauthor=False))]
-            ids = ["default"]
+            ids = ["default-user"]
         metafunc.parametrize("config_dir_env", dirs, ids=ids)
 
 
@@ -155,6 +174,17 @@ def config_file(
     config_dir_env.path.mkdir(parents=True)
     for key, value in config_dir_env.env.items():
         monkeypatch.setenv(key, value)
+
+    # Set bad tokens in lower precedence config files to verify that they are
+    # not used.
+    for lower_precedence_path in iter_config_paths():
+        if lower_precedence_path == config_dir_env.path:
+            break
+        lower_precedence_path.mkdir(parents=True, exist_ok=True)
+        doc = {section: {"token": f"token from {lower_precedence_path}"}}
+        with open(lower_precedence_path / "gitlab-pypi.toml", "wb") as f:
+            tomli_w.dump(doc, f)
+
     path = config_dir_env.path / "gitlab-pypi.toml"
     doc = {section: {"token": token}}
     with open(path, "wb") as f:
