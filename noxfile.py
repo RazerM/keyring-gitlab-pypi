@@ -13,11 +13,6 @@ def tests(session: nox.Session) -> None:
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
 
-    if session.posargs:
-        tests = session.posargs
-    else:
-        tests = ["tests/"]
-
     session.run(
         "pytest",
         "--numprocesses=auto",
@@ -28,7 +23,7 @@ def tests(session: nox.Session) -> None:
         "--cov-report=",
         "--cov-context=test",
         "--cov-append",
-        *tests,
+        *session.posargs,
     )
 
 
