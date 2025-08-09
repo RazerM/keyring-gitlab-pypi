@@ -9,6 +9,9 @@ def tests(session: nox.Session) -> None:
     session.run_install(
         "uv",
         "sync",
+        "--no-dev",
+        "--group=coverage",
+        "--group=test",
         f"--python={session.virtualenv.location}",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
@@ -28,6 +31,8 @@ def typing(session: nox.Session) -> None:
     session.run_install(
         "uv",
         "sync",
+        "--no-dev",
+        "--group=test",
         "--group=typing",
         f"--python={session.virtualenv.location}",
         env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},

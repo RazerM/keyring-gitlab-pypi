@@ -39,17 +39,21 @@ Repository = "https://github.com/RazerM/keyring-gitlab-pypi"
 dev = [
     { include-group = "coverage" },
     { include-group = "nox" },
-    "pytest>=8.3.5",
+    { include-group = "test" },
     "ruff==0.11.9",
-    "pyfakefs>=5.8.0",
-    "tomli-w>=1.2.0",
-    "pytest-xdist>=3.6.1",
 ]
 coverage = [
     "coverage[toml]>=7.10.2",
 ]
 nox = [
     "nox>=2025.2.9",
+]
+test = [
+    "attrs>=25.3.0",
+    "pyfakefs>=5.8.0",
+    "pytest-xdist>=3.6.1",
+    "pytest>=8.3.5",
+    "tomli-w>=1.2.0",
 ]
 typing = [
     "mypy>=1.15.0",

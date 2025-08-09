@@ -394,6 +394,7 @@ coverage = [
     { name = "coverage", extra = ["toml"] },
 ]
 dev = [
+    { name = "attrs" },
     { name = "coverage", extra = ["toml"] },
     { name = "nox" },
     { name = "pyfakefs" },
@@ -404,6 +405,13 @@ dev = [
 ]
 nox = [
     { name = "nox" },
+]
+test = [
+    { name = "attrs" },
+    { name = "pyfakefs" },
+    { name = "pytest" },
+    { name = "pytest-xdist" },
+    { name = "tomli-w" },
 ]
 typing = [
     { name = "mypy" },
@@ -420,6 +428,7 @@ requires-dist = [
 [package.metadata.requires-dev]
 coverage = [{ name = "coverage", extras = ["toml"], specifier = ">=7.10.2" }]
 dev = [
+    { name = "attrs", specifier = ">=25.3.0" },
     { name = "coverage", extras = ["toml"], specifier = ">=7.10.2" },
     { name = "nox", specifier = ">=2025.2.9" },
     { name = "pyfakefs", specifier = ">=5.8.0" },
@@ -429,6 +438,13 @@ dev = [
     { name = "tomli-w", specifier = ">=1.2.0" },
 ]
 nox = [{ name = "nox", specifier = ">=2025.2.9" }]
+test = [
+    { name = "attrs", specifier = ">=25.3.0" },
+    { name = "pyfakefs", specifier = ">=5.8.0" },
+    { name = "pytest", specifier = ">=8.3.5" },
+    { name = "pytest-xdist", specifier = ">=3.6.1" },
+    { name = "tomli-w", specifier = ">=1.2.0" },
+]
 typing = [{ name = "mypy", specifier = ">=1.15.0" }]
 
 [[package]]
