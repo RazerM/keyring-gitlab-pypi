@@ -36,7 +36,9 @@ jobs:
       - name: "Run nox targets for ${{ matrix.python-version }}"
         run: "uv run nox --python ${{ matrix.python-version }}"
       - name: "Convert coverage"
-        run: uv run coverage xml
+        run: |
+          uv run coverage combine
+          uv run coverage xml
       - name: "Upload coverage to Codecov"
         uses: codecov/codecov-action@v5
         with:
