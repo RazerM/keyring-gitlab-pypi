@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 import pytest
 from keyring.credentials import SimpleCredential
 from pyfakefs.fake_filesystem import FakeFilesystem
@@ -11,13 +9,13 @@ from keyrings.gitlab_pypi import GitlabPypi
 
 
 def test_get_password(
-    backend: GitlabPypi, config_file_access_token: Path, service: str, token: str
+    backend: GitlabPypi, config_file_access_token: None, service: str, token: str
 ) -> None:
     assert backend.get_password(service, "__token__") == token
 
 
 def test_get_password_wrong_username(
-    backend: GitlabPypi, config_file_access_token: Path, service: str, token: str
+    backend: GitlabPypi, config_file_access_token: None, service: str, token: str
 ) -> None:
     assert backend.get_password(service, "__token__") == token
     assert backend.get_password(service, "alice") is None
@@ -26,7 +24,7 @@ def test_get_password_wrong_username(
 @pytest.mark.parametrize("username", [None, "", "username", "__token__"])
 def test_get_credential(
     backend: GitlabPypi,
-    config_file_access_token: Path,
+    config_file_access_token: None,
     service: str,
     token: str,
     username: str | None,
@@ -38,7 +36,7 @@ def test_get_credential(
 
 
 def test_get_password_unknown_url(
-    backend: GitlabPypi, config_file_access_token: Path, badservice: str
+    backend: GitlabPypi, config_file_access_token: None, badservice: str
 ) -> None:
     assert backend.get_password(badservice, "__token__") is None
 
@@ -50,7 +48,7 @@ def test_get_password_no_config(
 
 
 def test_get_password_wrong_url(
-    backend: GitlabPypi, config_file_access_token: Path, service: str
+    backend: GitlabPypi, config_file_access_token: None, service: str
 ) -> None:
     service = service.replace("/pypi/", "/banana/")
     assert backend.get_password(service, "__token__") is None
@@ -61,7 +59,7 @@ def test_get_password_invalid_url(backend: GitlabPypi, fs: FakeFilesystem) -> No
 
 
 def test_get_password_invalid_config(
-    backend: GitlabPypi, invalid_config_file: Path, service: str
+    backend: GitlabPypi, invalid_config: None, service: str
 ) -> None:
     assert backend.get_password(service, "__token__") is None
 
@@ -74,7 +72,7 @@ def test_get_password_invalid_url_scheme(
 
 
 def test_get_credential_unknown_url(
-    backend: GitlabPypi, config_file_access_token: Path, badservice: str
+    backend: GitlabPypi, config_file_access_token: None, badservice: str
 ) -> None:
     assert backend.get_credential(badservice, None) is None
 
@@ -86,7 +84,7 @@ def test_get_credential_no_config(
 
 
 def test_get_credential_wrong_url(
-    backend: GitlabPypi, config_file_access_token: Path, service: str
+    backend: GitlabPypi, config_file_access_token: None, service: str
 ) -> None:
     service = service.replace("/pypi/", "/banana/")
     assert backend.get_credential(service, None) is None

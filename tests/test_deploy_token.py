@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from pathlib import Path
-
 from keyring.credentials import SimpleCredential
 
 from keyrings.gitlab_pypi import GitlabPypi
@@ -9,7 +7,7 @@ from keyrings.gitlab_pypi import GitlabPypi
 
 def test_get_password(
     backend: GitlabPypi,
-    config_file_deploy_token: Path,
+    config_file_deploy_token: None,
     service: str,
     token: str,
     deploy_token_username: str,
@@ -20,7 +18,7 @@ def test_get_password(
 
 def test_get_credential(
     backend: GitlabPypi,
-    config_file_deploy_token: Path,
+    config_file_deploy_token: None,
     service: str,
     token: str,
     deploy_token_username: str,

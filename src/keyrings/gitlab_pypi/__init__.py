@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import re
 import sys
+from collections import defaultdict
 from collections.abc import Iterator
 from itertools import product
 from pathlib import Path
@@ -20,6 +21,9 @@ else:
 
 
 CONFIG_APPNAME = "gitlab-pypi"
+ENV_VAR_PATTERN = re.compile(
+    r"^KEYRING_GITLAB_PYPI_(?P<name>.+)_(?P<field>INSTANCE|TOKEN|USERNAME)$"
+)
 
 
 def user_config_path() -> Path:
@@ -79,6 +83,9 @@ def _load_access_credential(service: str) -> tuple[str, str] | None:
     if url is None:
         return None
 
+    if credential := _load_access_credential_from_env(url):
+        return credential
+
     # Since we don't need to merge config files, we can start with the
     # highest-precedence file and return the first token we find.
     for path in reversed(list(iter_config_paths())):
@@ -97,6 +104,41 @@ def _load_access_credential_from_config_path(
     except (FileNotFoundError, tomllib.TOMLDecodeError):
         return None
 
+    return _load_access_credential_from_config(config, url)
+
+
+def _load_access_credential_from_env(url: URL) -> tuple[str, str] | None:
+    groups: defaultdict[str, dict[str, str]] = defaultdict(dict)
+
+    for key, value in os.environ.items():
+        match = ENV_VAR_PATTERN.match(key)
+        if match is None:
+            continue
+
+        name = match.group("name")
+        field = match.group("field").lower()
+        groups[name][field] = value
+
+    config: dict[str, object] = {}
+    for name in sorted(groups):
+        group = groups[name]
+        try:
+            instance = group["instance"]
+            token = group["token"]
+        except KeyError:
+            continue
+
+        host_config: dict[str, str] = {"token": token}
+        if "username" in group:
+            host_config["username"] = group["username"]
+        config[instance] = host_config
+
+    return _load_access_credential_from_config(config, url)
+
+
+def _load_access_credential_from_config(
+    config: dict[str, object], url: URL
+) -> tuple[str, str] | None:
     # Transform a URL like https://gitlab.com/api/v4/projects/0/packages/pypi/simple
     # into some keys that can be used:
     # - https://gitlab.com
