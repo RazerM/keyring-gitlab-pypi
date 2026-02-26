@@ -73,7 +73,7 @@ def iter_config_paths() -> Iterator[Path]:
     yield user_config_path()
 
 
-def _load_access_token(service: str) -> str | None:
+def _load_access_credential(service: str) -> tuple[str, str] | None:
     url = _gitlab_url_from_service(service)
 
     if url is None:
@@ -82,13 +82,15 @@ def _load_access_token(service: str) -> str | None:
     # Since we don't need to merge config files, we can start with the
     # highest-precedence file and return the first token we find.
     for path in reversed(list(iter_config_paths())):
-        if token := _load_access_token_from_config_path(path, url):
-            return token
+        if credential := _load_access_credential_from_config_path(path, url):
+            return credential
 
     return None
 
 
-def _load_access_token_from_config_path(path: Path, url: URL) -> str | None:
+def _load_access_credential_from_config_path(
+    path: Path, url: URL
+) -> tuple[str, str] | None:
     try:
         with open(path / CONFIG_FILENAME, "rb") as f:
             config = tomllib.load(f)
@@ -134,8 +136,14 @@ def _load_access_token_from_config_path(path: Path, url: URL) -> str | None:
         if not token:
             continue
 
-        if isinstance(token, str):
-            return token
+        if not isinstance(token, str):
+            continue
+
+        username = host_config.get("username", "__token__")
+        if not isinstance(username, str):
+            continue
+
+        return username, token
 
     return None
 
@@ -177,10 +185,16 @@ class GitlabPypi(KeyringBackend):
         def __init__(self) -> None: ...
 
     def get_password(self, service: str, username: str) -> str | None:
-        if username == "__token__":
-            return _load_access_token(service)
-        elif username == "gitlab-ci-token":
+        if username == "gitlab-ci-token":
             return _load_ci_job_token(service)
+
+        credential = _load_access_credential(service)
+        if credential is None:
+            return None
+
+        config_username, token = credential
+        if config_username == username:
+            return token
 
         return None
 
@@ -195,8 +209,8 @@ class GitlabPypi(KeyringBackend):
         service: str,
         username: str | None,
     ) -> SimpleCredential | None:
-        if token := _load_access_token(service):
-            return SimpleCredential("__token__", token)
+        if credential := _load_access_credential(service):
+            return SimpleCredential(*credential)
         elif token := _load_ci_job_token(service):
             return SimpleCredential("gitlab-ci-token", token)
 

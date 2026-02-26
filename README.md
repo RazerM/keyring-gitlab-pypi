@@ -54,10 +54,24 @@
       <dd><code>C:\ProgramData\gitlab-pypi\gitlab-pypi.toml</code></dd>
     </dl>
 
-3.  Create a personal access token with `read_api` scope and add it to the config file:
+3.  Configure a token
+
+    ### Personal Access Token
+
+    Create a personal access token with the `read_api` scope and add it to the config file:
 
     ```toml
-    ["https://gitlab.com"]
+    ["gitlab.com"]
+    token = "<token>"
+    ```
+
+    ### Deploy Token
+
+    Create a deploy token with the `read_package_registry` scope and add it to the config file:
+
+    ```toml
+    ["gitlab.com"]
+    username = "<username>"
     token = "<token>"
     ```
 
@@ -96,7 +110,7 @@
 
     You need `authenticate = "always"` for uv to invoke [keyring] when no username is specified. This option is a good idea anyway!
 
-    Alternatively, add the username `__token__` to the URL, but this is not recommended for `pyproject.toml` as you likely want to use a different username in CI, for example.
+    Alternatively, add the username (which is `__token__` for personal access tokens) to the URL, but this is not recommended for `pyproject.toml` as you likely want to use a different username in CI, for example.
 
 6.  Done! `keyring-gitlab-pypi` will return your token for URLs that look like package installs.
 
