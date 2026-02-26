@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import random
 import re
 import secrets
 import string
@@ -139,6 +140,11 @@ def token() -> str:
     return "".join(secrets.choice(alphabet) for _ in range(20))
 
 
+@pytest.fixture
+def deploy_token_username() -> str:
+    return f"gitlab+deploy-token-{random.randint(0, 999):03d}"
+
+
 @pytest.fixture(
     # s: explicit scheme even if https
     # p: explicit port even if default
@@ -163,13 +169,17 @@ def section(request: FixtureRequest, gitlab_base_url: URL) -> str:
     return "".join(parts)
 
 
-@pytest.fixture
-def config_file(
+@pytest.fixture(
+    params=[None, "__token__"],
+    ids=["implicit-username", "explicit-username"],
+)
+def config_file_access_token(
     config_dir_env: ConfigDirEnv,
     monkeypatch: MonkeyPatch,
     fs: FakeFilesystem,
     token: str,
     section: str,
+    request: FixtureRequest,
 ) -> Path:
     config_dir_env.path.mkdir(parents=True)
     for key, value in config_dir_env.env.items():
@@ -186,7 +196,45 @@ def config_file(
             tomli_w.dump(doc, f)
 
     path = config_dir_env.path / "gitlab-pypi.toml"
-    doc = {section: {"token": token}}
+    host_config = {"token": token}
+    if request.param is not None:
+        host_config["username"] = request.param
+    doc = {section: host_config}
+    with open(path, "wb") as f:
+        tomli_w.dump(doc, f)
+    return path
+
+
+@pytest.fixture
+def config_file_deploy_token(
+    config_dir_env: ConfigDirEnv,
+    monkeypatch: MonkeyPatch,
+    fs: FakeFilesystem,
+    token: str,
+    section: str,
+    deploy_token_username: str,
+) -> Path:
+    config_dir_env.path.mkdir(parents=True)
+    for key, value in config_dir_env.env.items():
+        monkeypatch.setenv(key, value)
+
+    # Set bad tokens in lower precedence config files to verify that they are
+    # not used.
+    for lower_precedence_path in iter_config_paths():
+        if lower_precedence_path == config_dir_env.path:
+            break
+        lower_precedence_path.mkdir(parents=True, exist_ok=True)
+        doc = {
+            section: {
+                "username": deploy_token_username,
+                "token": f"token from {lower_precedence_path}",
+            }
+        }
+        with open(lower_precedence_path / "gitlab-pypi.toml", "wb") as f:
+            tomli_w.dump(doc, f)
+
+    path = config_dir_env.path / "gitlab-pypi.toml"
+    doc = {section: {"username": deploy_token_username, "token": token}}
     with open(path, "wb") as f:
         tomli_w.dump(doc, f)
     return path
@@ -197,6 +245,7 @@ class InvalidConfig(Enum):
     NO_TOKEN = auto()
     BLANK_TOKEN = auto()
     NON_STR_TOKEN = auto()
+    NON_STR_USERNAME = auto()
 
 
 @pytest.fixture(
@@ -205,6 +254,7 @@ class InvalidConfig(Enum):
         InvalidConfig.NO_TOKEN,
         InvalidConfig.BLANK_TOKEN,
         InvalidConfig.NON_STR_TOKEN,
+        InvalidConfig.NON_STR_USERNAME,
     ]
 )
 def invalid_config_file(
@@ -228,6 +278,8 @@ def invalid_config_file(
         doc = {section: {"token": ""}}
     elif request.param is InvalidConfig.NON_STR_TOKEN:
         doc = {section: {"token": 123}}
+    elif request.param is InvalidConfig.NON_STR_USERNAME:
+        doc = {section: {"username": 123, "token": token}}
     else:
         raise NotImplementedError(request.param)
 
