@@ -1,5 +1,12 @@
 # Change Log
 
+## 1.2 - 2026-02-27
+
+### Added
+
+- Support deploy tokens by allowing username to be configured.
+- Support configuration via environment variables.
+
 ## 1.1 - 2025-05-13
 
 ### Added
