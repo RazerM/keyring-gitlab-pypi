@@ -8,14 +8,15 @@ import string
 import sys
 from collections.abc import Mapping
 from enum import Enum, auto
-from functools import cached_property
+from functools import cached_property, partial
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any
+from typing import Any, Protocol, cast
+from typing import NoReturn as Never
 
 import pytest
 import tomli_w
-from attrs import define, field
+from attrs import define, field, setters
 from platformdirs import user_config_path
 from pyfakefs.fake_filesystem import FakeFilesystem
 from pytest import FixtureRequest, Metafunc, MonkeyPatch
@@ -34,8 +35,46 @@ def _convert_mapping_proxy(d: Mapping[str, str]) -> MappingProxyType[str, str]:
     return MappingProxyType(d)
 
 
-@define(frozen=True)
-class ConfigDirEnv:
+@define
+class Invalid:
+    def unhandled(self, desc: str) -> Never:
+        raise RuntimeError(
+            f"{self!r} could not be used to set an invalid {desc}"
+        )  # pragma: no cover
+
+
+@define
+class InvalidNotATable(Invalid):
+    instance: str
+
+
+@define
+class InvalidValue(Invalid):
+    value: Any
+
+
+@define
+class InvalidMissing(Invalid):
+    pass
+
+
+class Scenario(Protocol):
+    monkeypatch: MonkeyPatch | None
+
+    def configure(  # pragma: no cover
+        self,
+        instance: str | Invalid,
+        username: str | None | Invalid,
+        token: str | Invalid,
+        *,
+        create_lower_precedence_config_files: bool = True,
+    ) -> None: ...
+
+
+@define(on_setattr=setters.frozen)
+class ConfigPathScenario(Scenario):
+    """In this scenario, a config file should be created in the given path."""
+
     # Prior to Python 3.11, we can't use Path objects created by
     # pytest_generate_tests because pyfakefs is not yet active. Instead, we
     # hold onto a str and lazily create a path when the property is accessed
@@ -43,30 +82,164 @@ class ConfigDirEnv:
     # https://pytest-pyfakefs.readthedocs.io/en/latest/troubleshooting.html#pathlib-path-objects-created-outside-of-tests
     _path: str = field(converter=_convert_path_to_str)
     env: Mapping[str, str] = field(factory=dict, converter=_convert_mapping_proxy)
+    monkeypatch: MonkeyPatch | None = field(
+        init=False, default=None, on_setattr=setters.NO_OP
+    )
 
     @cached_property
     def path(self) -> Path:
         return Path(self._path)
 
+    def configure(
+        self,
+        instance: str | Invalid,
+        username: str | None | Invalid,
+        token: str | Invalid,
+        *,
+        create_lower_precedence_config_files: bool = True,
+    ) -> None:
+        assert self.monkeypatch is not None
+        self.path.mkdir(parents=True)
+        for key, value in self.env.items():
+            self.monkeypatch.setenv(key, value)
+
+        if (
+            create_lower_precedence_config_files
+            and not isinstance(instance, Invalid)
+            and not isinstance(username, Invalid)
+        ):
+            _create_lower_precedence_config_files(instance, username, self.path)
+
+        host_config = {}
+        if isinstance(token, InvalidMissing):
+            pass
+        elif isinstance(token, InvalidValue):
+            host_config["token"] = token.value
+        elif isinstance(token, Invalid):
+            token.unhandled("token")  # pragma: no cover
+        else:
+            host_config["token"] = token
+
+        if isinstance(username, InvalidValue):
+            host_config["username"] = username.value
+        elif isinstance(username, Invalid):
+            username.unhandled("username")  # pragma: no cover
+        elif username is not None:
+            host_config["username"] = username
+
+        doc: dict[str, Any] = {}
+        if isinstance(instance, InvalidNotATable):
+            doc[instance.instance] = ""
+        elif isinstance(instance, Invalid):
+            instance.unhandled("instance")  # pragma: no cover
+        else:
+            doc[instance] = host_config
+        with open(self.path / "gitlab-pypi.toml", "wb") as f:
+            tomli_w.dump(doc, f)
+
+
+@define(on_setattr=setters.frozen)
+class EnvVarScenario(Scenario):
+    """In this scenario, environment variables should be used for configuration."""
+
+    monkeypatch: MonkeyPatch | None = field(
+        init=False, default=None, on_setattr=setters.NO_OP
+    )
+
+    def configure(
+        self,
+        instance: str | Invalid,
+        username: str | None | Invalid,
+        token: str | Invalid,
+        *,
+        create_lower_precedence_config_files: bool = True,
+    ) -> None:
+        assert self.monkeypatch is not None
+        if (
+            create_lower_precedence_config_files
+            and not isinstance(instance, Invalid)
+            and not isinstance(username, Invalid)
+        ):
+            _create_lower_precedence_config_files(instance, username)
+
+        key = "".join(random.choice(string.ascii_uppercase + "_") for _ in range(5))
+        if isinstance(instance, InvalidNotATable):
+            pytest.skip("not relevant for EnvVarScenario")
+        elif isinstance(instance, Invalid):
+            instance.unhandled("instance")  # pragma: no cover
+        else:
+            self.monkeypatch.setenv(f"KEYRING_GITLAB_PYPI_{key}_INSTANCE", instance)
+
+        if isinstance(token, InvalidMissing):
+            pass
+        elif isinstance(token, InvalidValue):
+            pytest.skip("not relevant for EnvVarScenario")
+        elif isinstance(token, Invalid):
+            token.unhandled("token")  # pragma: no cover
+        else:
+            self.monkeypatch.setenv(f"KEYRING_GITLAB_PYPI_{key}_TOKEN", token)
+
+        if isinstance(username, InvalidValue):
+            pytest.skip("not relevant for EnvVarScenario")
+        elif isinstance(username, Invalid):
+            username.unhandled("username")  # pragma: no cover
+        elif username is not None:
+            self.monkeypatch.setenv(f"KEYRING_GITLAB_PYPI_{key}_USERNAME", username)
+
+
+def _create_lower_precedence_config_files(
+    instance: str, username: str | None, path: Path | None = None
+) -> None:
+    assert path is None or path.is_dir() or not path.exists(), "expected directory"
+
+    # Set bad tokens in lower precedence config files to verify that they are
+    # not used.
+    for lower_precedence_path in iter_config_paths():
+        if path is not None and lower_precedence_path == path:
+            break
+        lower_precedence_path.mkdir(parents=True, exist_ok=True)
+        host_config = {"token": f"token from {lower_precedence_path}"}
+        if username is not None:
+            host_config["username"] = username
+        doc = {instance: host_config}
+
+        with open(lower_precedence_path / "gitlab-pypi.toml", "wb") as f:
+            tomli_w.dump(doc, f)
+
+
+@pytest.fixture
+def scenario(
+    request: FixtureRequest,
+    monkeypatch: MonkeyPatch,
+    fs: FakeFilesystem,
+) -> Scenario:
+    scenario = request.param
+    scenario.monkeypatch = monkeypatch
+    return cast(Scenario, scenario)
+
 
 def pytest_generate_tests(metafunc: Metafunc) -> None:
-    if "config_dir_env" in metafunc.fixturenames:
+    if "scenario" in metafunc.fixturenames:
         home = Path.home()
         if sys.platform == "darwin":
             dirs = [
-                ConfigDirEnv(home / "Library/Application Support/gitlab-pypi"),
-                ConfigDirEnv(home / ".config"),
-                ConfigDirEnv("/Library/Application Support/gitlab-pypi"),
+                ConfigPathScenario(home / "Library/Application Support/gitlab-pypi"),
+                ConfigPathScenario(home / ".config"),
+                ConfigPathScenario("/Library/Application Support/gitlab-pypi"),
+                EnvVarScenario(),
             ]
-            ids = ["macos-user", "macos-user-linux-like", "macos-system"]
+            ids = ["macos-user", "macos-user-linux-like", "macos-system", "env-vars"]
         elif sys.platform == "linux":
             config_home = home / ".customconfig"
             dirs = [
-                ConfigDirEnv(home / ".config"),
-                ConfigDirEnv(config_home, {"XDG_CONFIG_HOME": str(config_home)}),
-                ConfigDirEnv("/etc/xdg/gitlab-pypi"),
-                ConfigDirEnv("/etc"),
-                ConfigDirEnv("/etc/foo/gitlab-pypi", {"XDG_CONFIG_DIRS": "/etc/foo"}),
+                ConfigPathScenario(home / ".config"),
+                ConfigPathScenario(config_home, {"XDG_CONFIG_HOME": str(config_home)}),
+                ConfigPathScenario("/etc/xdg/gitlab-pypi"),
+                ConfigPathScenario("/etc"),
+                ConfigPathScenario(
+                    "/etc/foo/gitlab-pypi", {"XDG_CONFIG_DIRS": "/etc/foo"}
+                ),
+                EnvVarScenario(),
             ]
             ids = [
                 "linux-user",
@@ -74,20 +247,22 @@ def pytest_generate_tests(metafunc: Metafunc) -> None:
                 "linux-system-xdg",
                 "linux-system-etc",
                 "linux-system-xdg-config-dirs",
+                "env-vars",
             ]
         elif sys.platform == "win32":
             dirs = [
-                ConfigDirEnv(home / "AppData/Local/gitlab-pypi"),
-                ConfigDirEnv(r"C:\ProgramData\gitlab-pypi"),
+                ConfigPathScenario(home / "AppData/Local/gitlab-pypi"),
+                ConfigPathScenario(r"C:\ProgramData\gitlab-pypi"),
+                EnvVarScenario(),
             ]
-            ids = [
-                "windows-user",
-                "windows-system",
-            ]
+            ids = ["windows-user", "windows-system", "env-vars"]
         else:  # pragma: no cover
-            dirs = [ConfigDirEnv(user_config_path("gitlab-pypi", appauthor=False))]
-            ids = ["default-user"]
-        metafunc.parametrize("config_dir_env", dirs, ids=ids)
+            dirs = [
+                ConfigPathScenario(user_config_path("gitlab-pypi", appauthor=False)),
+                EnvVarScenario(),
+            ]
+            ids = ["default-user", "env-vars"]
+        metafunc.parametrize("scenario", dirs, ids=ids, indirect=True)
 
 
 @pytest.fixture(
@@ -151,7 +326,7 @@ def deploy_token_username() -> str:
     # t: trailing slash
     params=["", "s", "p", "t", "sp", "st", "pt", "spt"],
 )
-def section(request: FixtureRequest, gitlab_base_url: URL) -> str:
+def instance(request: FixtureRequest, gitlab_base_url: URL) -> str:
     urlspec = request.param
     url = gitlab_base_url
     parts = []
@@ -174,70 +349,24 @@ def section(request: FixtureRequest, gitlab_base_url: URL) -> str:
     ids=["implicit-username", "explicit-username"],
 )
 def config_file_access_token(
-    config_dir_env: ConfigDirEnv,
+    scenario: Scenario,
     monkeypatch: MonkeyPatch,
-    fs: FakeFilesystem,
     token: str,
-    section: str,
+    instance: str,
     request: FixtureRequest,
-) -> Path:
-    config_dir_env.path.mkdir(parents=True)
-    for key, value in config_dir_env.env.items():
-        monkeypatch.setenv(key, value)
-
-    # Set bad tokens in lower precedence config files to verify that they are
-    # not used.
-    for lower_precedence_path in iter_config_paths():
-        if lower_precedence_path == config_dir_env.path:
-            break
-        lower_precedence_path.mkdir(parents=True, exist_ok=True)
-        doc = {section: {"token": f"token from {lower_precedence_path}"}}
-        with open(lower_precedence_path / "gitlab-pypi.toml", "wb") as f:
-            tomli_w.dump(doc, f)
-
-    path = config_dir_env.path / "gitlab-pypi.toml"
-    host_config = {"token": token}
-    if request.param is not None:
-        host_config["username"] = request.param
-    doc = {section: host_config}
-    with open(path, "wb") as f:
-        tomli_w.dump(doc, f)
-    return path
+) -> None:
+    scenario.configure(instance, request.param, token)
 
 
 @pytest.fixture
 def config_file_deploy_token(
-    config_dir_env: ConfigDirEnv,
+    scenario: ConfigPathScenario,
     monkeypatch: MonkeyPatch,
-    fs: FakeFilesystem,
     token: str,
-    section: str,
+    instance: str,
     deploy_token_username: str,
-) -> Path:
-    config_dir_env.path.mkdir(parents=True)
-    for key, value in config_dir_env.env.items():
-        monkeypatch.setenv(key, value)
-
-    # Set bad tokens in lower precedence config files to verify that they are
-    # not used.
-    for lower_precedence_path in iter_config_paths():
-        if lower_precedence_path == config_dir_env.path:
-            break
-        lower_precedence_path.mkdir(parents=True, exist_ok=True)
-        doc = {
-            section: {
-                "username": deploy_token_username,
-                "token": f"token from {lower_precedence_path}",
-            }
-        }
-        with open(lower_precedence_path / "gitlab-pypi.toml", "wb") as f:
-            tomli_w.dump(doc, f)
-
-    path = config_dir_env.path / "gitlab-pypi.toml"
-    doc = {section: {"username": deploy_token_username, "token": token}}
-    with open(path, "wb") as f:
-        tomli_w.dump(doc, f)
-    return path
+) -> None:
+    scenario.configure(instance, deploy_token_username, token)
 
 
 class InvalidConfig(Enum):
@@ -257,40 +386,34 @@ class InvalidConfig(Enum):
         InvalidConfig.NON_STR_USERNAME,
     ]
 )
-def invalid_config_file(
-    config_dir_env: ConfigDirEnv,
-    monkeypatch: MonkeyPatch,
-    fs: FakeFilesystem,
+def invalid_config(
+    scenario: Scenario,
     token: str,
-    section: str,
+    instance: str,
     request: FixtureRequest,
-) -> Path:
-    config_dir_env.path.mkdir(parents=True)
-    for key, value in config_dir_env.env.items():
-        monkeypatch.setenv(key, value)
-    path = config_dir_env.path / "gitlab-pypi.toml"
-    doc: Any
+) -> None:
+    configure = partial(scenario.configure, create_lower_precedence_config_files=False)
     if request.param is InvalidConfig.NOT_A_TABLE:
-        doc = {section: ""}
+        configure(InvalidNotATable(instance), None, "")
     elif request.param is InvalidConfig.NO_TOKEN:
-        doc = {section: {}}
+        configure(instance, None, InvalidMissing())
     elif request.param is InvalidConfig.BLANK_TOKEN:
-        doc = {section: {"token": ""}}
+        configure(instance, None, "")
     elif request.param is InvalidConfig.NON_STR_TOKEN:
-        doc = {section: {"token": 123}}
+        configure(instance, None, InvalidValue(123))
     elif request.param is InvalidConfig.NON_STR_USERNAME:
-        doc = {section: {"username": 123, "token": token}}
+        configure(instance, InvalidValue(123), token)
     else:
         raise NotImplementedError(request.param)
-
-    with open(path, "wb") as f:
-        tomli_w.dump(doc, f)
-    return path
 
 
 @pytest.fixture(autouse=True)
 def isolate_env(monkeypatch: MonkeyPatch) -> None:
-    keys = [key for key in os.environ.keys() if re.match(r"(CI|GITLAB|XDG)_", key)]
+    keys = [
+        key
+        for key in os.environ.keys()
+        if re.match(r"(CI|GITLAB|XDG|KEYRING_GITLAB_PYPI)_", key)
+    ]
     for key in keys:
         monkeypatch.delenv(key)  # pragma: no cover
 

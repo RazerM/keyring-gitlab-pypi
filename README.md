@@ -65,6 +65,13 @@
     token = "<token>"
     ```
 
+    or set environment variables where `<name>` is an arbitrary key to group the variables, e.g. `MYORG`
+
+    ```bash
+    export KEYRING_GITLAB_PYPI_<name>_INSTANCE=gitlab.com
+    export KEYRING_GITLAB_PYPI_<name>_TOKEN=<token>
+    ```
+
     ### Deploy Token
 
     Create a deploy token with the `read_package_registry` scope and add it to the config file:
@@ -73,6 +80,14 @@
     ["gitlab.com"]
     username = "<username>"
     token = "<token>"
+    ```
+
+    or set environment variables where `<name>` is an arbitrary key to group the variables, e.g. `MYORG`
+
+    ```bash
+    export KEYRING_GITLAB_PYPI_<name>_INSTANCE=gitlab.com
+    export KEYRING_GITLAB_PYPI_<name>_USERNAME=<username>
+    export KEYRING_GITLAB_PYPI_<name>_TOKEN=<token>
     ```
 
 4.  Configure [`keyring-provider`] in uv:
