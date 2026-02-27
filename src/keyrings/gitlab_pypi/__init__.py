@@ -220,7 +220,7 @@ def _load_ci_job_token(service: str) -> str | None:
 
 
 class GitlabPypi(KeyringBackend):
-    priority = 9  # type: ignore[assignment]
+    priority = 9
 
     if TYPE_CHECKING:
 

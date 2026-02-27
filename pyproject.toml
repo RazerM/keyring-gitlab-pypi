@@ -56,7 +56,7 @@ test = [
     "tomli-w>=1.2.0",
 ]
 typing = [
-    "mypy>=1.15.0",
+    "mypy>=1.19.1",
 ]
 
 [tool.setuptools.packages.find]
