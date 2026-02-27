@@ -91,7 +91,6 @@
     ```
 
 4.  Configure [`keyring-provider`] in uv:
-
     - using an environment variable:
 
       ```bash

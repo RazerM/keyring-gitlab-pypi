@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-toml
       - id: check-yaml
@@ -10,16 +10,16 @@ repos:
       - id: trailing-whitespace
         args: [--markdown-linebreak-ext=md]
   - repo: https://github.com/rbubley/mirrors-prettier
-    rev: v3.5.3
+    rev: v3.8.1
     hooks:
       - id: prettier
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.9 # also update pyproject.toml
+    rev: v0.15.4 # also update pyproject.toml
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
   - repo: https://github.com/astral-sh/uv-pre-commit
-    rev: 0.8.8
+    rev: 0.10.6
     hooks:
       - id: uv-lock
