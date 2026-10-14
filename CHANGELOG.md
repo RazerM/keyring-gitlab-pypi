@@ -1,5 +1,11 @@
 # Change Log
 
+## Unreleased
+
+### Removed
+
+- Python 3.9 support.
+
 ## 1.2 - 2026-02-27
 
 ### Added
