@@ -1,5 +1,7 @@
 import nox
 
+nox.needs_version = ">=2026.4.10"
+
 PYPROJECT = nox.project.load_toml("pyproject.toml")
 PYTHON_VERSIONS = nox.project.python_versions(PYPROJECT)
 
@@ -15,8 +17,6 @@ def tests(session: nox.Session) -> None:
         "--no-dev",
         "--group=coverage",
         "--group=test",
-        f"--python={session.virtualenv.location}",
-        env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
 
     session.run(
@@ -37,8 +37,6 @@ def typing(session: nox.Session) -> None:
         "--no-dev",
         "--group=test",
         "--group=typing",
-        f"--python={session.virtualenv.location}",
-        env={"UV_PROJECT_ENVIRONMENT": session.virtualenv.location},
     )
     session.run(
         "mypy",
