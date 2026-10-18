@@ -11,8 +11,7 @@ from enum import Enum, auto
 from functools import cached_property, partial
 from pathlib import Path
 from types import MappingProxyType
-from typing import Any, Protocol, cast
-from typing import NoReturn as Never
+from typing import Any, Never, Protocol, cast
 
 import pytest
 import tomli_w
@@ -75,7 +74,7 @@ class Scenario(Protocol):
 class ConfigPathScenario(Scenario):
     """In this scenario, a config file should be created in the given path."""
 
-    # Prior to Python 3.11, we can't use Path objects created by
+    # On Python 3.13+, we can't use Path objects created by
     # pytest_generate_tests because pyfakefs is not yet active. Instead, we
     # hold onto a str and lazily create a path when the property is accessed
     # in a test fixture.
