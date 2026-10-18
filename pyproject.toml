@@ -46,7 +46,7 @@ coverage = [
     "coverage[toml]>=7.10.2",
 ]
 nox = [
-    "nox>=2025.2.9",
+    "nox>=2026.4.10",
 ]
 test = [
     "attrs>=25.3.0",
