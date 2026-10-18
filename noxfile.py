@@ -1,6 +1,7 @@
 import nox
 
-PYTHON_VERSIONS = ["3.10", "3.11", "3.12", "3.13", "3.14", "3.15"]
+PYPROJECT = nox.project.load_toml("pyproject.toml")
+PYTHON_VERSIONS = nox.project.python_versions(PYPROJECT)
 
 nox.options.reuse_existing_virtualenvs = True
 nox.options.default_venv_backend = "uv"
