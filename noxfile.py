@@ -1,10 +1,12 @@
 import nox
 
+PYTHON_VERSIONS = ["3.10", "3.11", "3.12", "3.13", "3.14"]
+
 nox.options.reuse_existing_virtualenvs = True
 nox.options.default_venv_backend = "uv"
 
 
-@nox.session(python=["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"])
+@nox.session(python=PYTHON_VERSIONS)
 def tests(session: nox.Session) -> None:
     session.run_install(
         "uv",
@@ -26,7 +28,7 @@ def tests(session: nox.Session) -> None:
     )
 
 
-@nox.session(python="3.13")
+@nox.session(python=PYTHON_VERSIONS)
 def typing(session: nox.Session) -> None:
     session.run_install(
         "uv",
