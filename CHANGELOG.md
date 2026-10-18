@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- Python 3.15 support.
+
 ### Removed
 
 - Python 3.9 support.
