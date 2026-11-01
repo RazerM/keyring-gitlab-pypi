@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import re
 import sys
+import tomllib
 from collections import defaultdict
 from collections.abc import Iterator
 from itertools import product
@@ -13,12 +14,6 @@ import platformdirs
 from keyring.backend import KeyringBackend
 from keyring.credentials import SimpleCredential
 from yarl import URL
-
-if sys.version_info < (3, 11):
-    import tomli as tomllib
-else:
-    import tomllib
-
 
 CONFIG_APPNAME = "gitlab-pypi"
 ENV_VAR_PATTERN = re.compile(
